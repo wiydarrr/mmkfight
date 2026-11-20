@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090807">
+    <meta name="description" content="ARES 45 : Zebo contre Baki II. Carte des combats et chat en direct.">
+    <title>MMK FIGHT — ARES 45 : Zebo vs Baki II</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #090807;
+            --panel: #141210;
+            --panel-soft: #1c1916;
+            --border: #332b20;
+            --text: #f4f1ea;
+            --muted: #aaa194;
+            --accent: #e1b23e;
+            --accent-bright: #f0ca62;
+            --content-width: 1040px;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px 18px 48px;
+            background: radial-gradient(ellipse at 50% -18%, #382916 0, var(--bg) 55%);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        button, input { font: inherit; }
+        .page-shell { width: min(100%, var(--content-width)); margin: 0 auto; }
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 8px 0 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+        .logo {
+            color: var(--text);
+            font-size: 1.3rem;
+            font-weight: 950;
+            letter-spacing: .08em;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .logo span { color: var(--accent); }
+        .live-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid rgba(225, 178, 62, .34);
+            border-radius: 999px;
+            background: rgba(225, 178, 62, .08);
+            color: var(--text);
+            font-size: .78rem;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e14b42;
+            box-shadow: 0 0 12px rgba(225, 75, 66, .7);
+        }
+        .event-banner { margin: 0 0 18px; text-align: center; }
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--accent);
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(1.5rem, 4vw, 2.25rem);
+            font-weight: 850;
+            letter-spacing: -.035em;
+            line-height: 1.15;
+        }
+        .player-container {
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #000;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .4);
+        }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+        video { display: block; width: 100%; height: 100%; object-fit: contain; }
+        .player-status {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            max-width: calc(100% - 28px);
+            padding: 7px 10px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 7px;
+            background: rgba(0, 0, 0, .72);
+            color: #e7eaf0;
+            font-size: .75rem;
+            pointer-events: none;
+        }
+        :focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 3px; }
+        .poster-section { margin-top: 22px; text-align: center; }
+        .poster-section h2, .chat-section h2 {
+            margin: 0;
+            padding-left: 11px;
+            border-left: 3px solid var(--accent);
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: .015em;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .poster-section h2 { margin-bottom: 14px; }
+        .fight-poster {
+            display: block;
+            width: min(100%, 760px);
+            height: auto;
+            margin: 0 auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 20px 55px rgba(0, 0, 0, .4);
+        }
+        .chat-section {
+            margin-top: 22px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel);
+        }
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .chat-status { color: var(--muted); font-size: .78rem; }
+        .chat-messages {
+            display: flex;
+            min-height: 190px;
+            max-height: 360px;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #0d0c0b;
+        }
+        .chat-placeholder { margin: auto; color: var(--muted); font-size: .88rem; text-align: center; }
+        .chat-message {
+            padding: 9px 11px;
+            border: 1px solid #29231b;
+            border-radius: 8px;
+            background: var(--panel-soft);
+            overflow-wrap: anywhere;
+        }
+        .chat-message-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 4px; }
+        .chat-message-name { color: var(--accent-bright); font-size: .82rem; font-weight: 800; }
+        .chat-message-time { color: var(--muted); font-size: .7rem; }
+        .chat-message-text { margin: 0; color: var(--text); font-size: .9rem; line-height: 1.45; white-space: pre-wrap; }
+        .chat-form { display: grid; grid-template-columns: minmax(120px, .32fr) minmax(0, 1fr) auto; gap: 9px; margin-top: 12px; }
+        .chat-form input {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #0d0c0b;
+            color: var(--text);
+        }
+        .chat-form input::placeholder { color: #857d72; }
+        .chat-form button {
+            min-height: 44px;
+            padding: 10px 16px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #17120a;
+            cursor: pointer;
+            font-weight: 850;
+        }
+        .chat-form button:hover { background: var(--accent-bright); }
+        .chat-form :disabled { cursor: not-allowed; opacity: .55; }
+        .chat-note { margin: 10px 0 0; color: var(--muted); font-size: .72rem; }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            clip-path: inset(50%);
+        }
+        @media (max-width: 560px) {
+            body { padding: 12px 12px 32px; }
+            .site-header { margin-bottom: 24px; padding-bottom: 15px; }
+            .logo { font-size: 1.12rem; }
+            .live-count { gap: 6px; padding: 7px 9px; font-size: .7rem; }
+            .chat-section { padding: 16px 13px; }
+            .chat-form { grid-template-columns: 1fr auto; }
+            .chat-form input[name="username"] { grid-column: 1 / -1; }
+            .chat-form input[name="message"] { min-width: 0; }
+            .chat-form button { padding: 10px 12px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <header class="site-header">
+            <a class="logo" href="#top" aria-label="MMK Fight, accueil">MMK<span>FIGHT</span></a>
+            <div class="live-count" aria-live="polite" aria-label="Nombre de visiteurs en direct">
+                <span class="live-dot" aria-hidden="true"></span>
+                <span id="visitorCount">Compteur à configurer</span>
+            </div>
+        </header>
+
+        <main id="top">
+            <section class="event-banner" aria-labelledby="event-title">
+                <p class="eyebrow">ARES Fighting Championship · ARES 45</p>
+                <h1 id="event-title">Zebo vs Baki II</h1>
+            </section>
+
+            <section class="player-container" aria-label="Lecteur vidéo">
+                <div class="video-wrapper">
+                    <video id="videoPlayer" controls playsinline preload="metadata" aria-label="Flux vidéo français de l’événement"></video>
+                    <div class="player-status" id="playerStatus" role="status" aria-live="polite">Préparation du lecteur…</div>
+                </div>
+            </section>
+
+            <section class="chat-section" aria-labelledby="chat-title">
+                <div class="section-heading">
+                    <h2 id="chat-title">Chat en direct</h2>
+                    <span class="chat-status" id="chatStatus" role="status" aria-live="polite">Connexion à configurer</span>
+                </div>
+                <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-relevant="additions text">
+                    <p class="chat-placeholder" id="chatPlaceholder">Le chat partagé sera disponible après la configuration du serveur.</p>
+                </div>
+                <form class="chat-form" id="chatForm">
+                    <label class="sr-only" for="chatUsername">Ton pseudo</label>
+                    <input id="chatUsername" name="username" type="text" maxlength="24" placeholder="Ton pseudo" autocomplete="nickname" required disabled>
+                    <label class="sr-only" for="chatMessage">Ton message</label>
+                    <input id="chatMessage" name="message" type="text" maxlength="300" placeholder="Écris un message…" autocomplete="off" required disabled>
+                    <button id="chatSend" type="submit" disabled>Envoyer</button>
+                </form>
+                <p class="chat-note">Les messages sont visibles par les visiteurs connectés. N’indique pas d’informations personnelles.</p>
+            </section>
+
+            <section class="poster-section" aria-labelledby="poster-title">
+                <h2 id="poster-title" class="sr-only">Carte complète ARES 45</h2>
+                <img class="fight-poster" src="ares45-carte.jpg" alt="Affiche complète de la carte ARES 45 : Zebo contre Baki II, combats principaux et préliminaires" width="1638" height="2048" loading="lazy">
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const FRENCH_STREAM_URL = "http://cf.leptisdigital.xyz/live/cf0a8b6e7f/0ce031848b/1686961.m3u8";
+        // À renseigner avec l’URL du projet Supabase et sa clé anon/publishable publique.
+        // Ne jamais mettre la clé service_role dans le code du site.
+        const SUPABASE_URL = "https://jyvnqqqycjnvdnsnwtfq.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_AV9vlzpS0JIp9vHsztytCg_QAOAx8xz";
+
+        const video = document.getElementById('videoPlayer');
+        const playerStatus = document.getElementById('playerStatus');
+        const visitorCount = document.getElementById('visitorCount');
+        const chatStatus = document.getElementById('chatStatus');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatPlaceholder = document.getElementById('chatPlaceholder');
+        const chatForm = document.getElementById('chatForm');
+        const chatUsername = document.getElementById('chatUsername');
+        const chatMessage = document.getElementById('chatMessage');
+        const chatSend = document.getElementById('chatSend');
+        let hls = null;
+
+        function setPlayerStatus(message) {
+            playerStatus.textContent = message;
+        }
+
+        function playFrenchStream() {
+            setPlayerStatus('Connexion au flux…');
+            if (window.Hls && Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(FRENCH_STREAM_URL);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(() => setPlayerStatus('Appuie sur Lecture pour démarrer.'));
+                });
+                hls.on(Hls.Events.ERROR, (_event, data) => {
+                    if (data.fatal) setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = FRENCH_STREAM_URL;
+                video.onloadedmetadata = () => {
+                    video.play().catch(() => setPlayerStatus('Appuie sur Lecture pour démarrer.'));
+                };
+                video.onerror = () => setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+            } else {
+                setPlayerStatus('La lecture HLS n’est pas prise en charge par ce navigateur.');
+            }
+        }
+
+        video.addEventListener('playing', () => setPlayerStatus('Lecture en cours.'));
+
+        function appendChatMessage(message) {
+            if (!message || typeof message.text !== 'string' || typeof message.username !== 'string') return;
+            chatPlaceholder?.remove();
+
+            const item = document.createElement('article');
+            item.className = 'chat-message';
+            const header = document.createElement('div');
+            header.className = 'chat-message-head';
+            const name = document.createElement('strong');
+            name.className = 'chat-message-name';
+            name.textContent = message.username.slice(0, 24);
+            const time = document.createElement('time');
+            time.className = 'chat-message-time';
+            const timestamp = typeof message.sentAt === 'string' ? Date.parse(message.sentAt) : Date.now();
+            const date = Number.isFinite(timestamp) ? new Date(timestamp) : new Date();
+            time.dateTime = date.toISOString();
+            time.textContent = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date);
+            const text = document.createElement('p');
+            text.className = 'chat-message-text';
+            text.textContent = message.text.slice(0, 300);
+            header.append(name, time);
+            item.append(header, text);
+            chatMessages.append(item);
+            while (chatMessages.children.length > 100) chatMessages.firstElementChild.remove();
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function configureRealtime() {
+            const configured = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 20;
+            if (!configured) {
+                visitorCount.textContent = 'Compteur à configurer';
+                chatStatus.textContent = 'Connexion à configurer';
+                return;
+            }
+            if (!window.supabase) {
+                visitorCount.textContent = 'Compteur indisponible';
+                chatStatus.textContent = 'Service de chat indisponible';
+                return;
+            }
+
+            const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const visitorId = window.crypto?.randomUUID?.() || `-`;
+            const visitorChannel = client.channel('ares45-visitors', { config: { presence: { key: visitorId } } });
+            let visitorSubscribed = false;
+
+            function updateVisitorCount() {
+                const presence = visitorChannel.presenceState();
+                const count = Object.values(presence).reduce((total, visitors) => total + visitors.length, 0);
+                visitorCount.textContent = `  'personnes' en direct`;
+            }
+
+            visitorChannel.on('presence', { event: 'sync' }, updateVisitorCount).subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    visitorSubscribed = true;
+                    await visitorChannel.track({ online_at: new Date().toISOString() });
+                    updateVisitorCount();
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    visitorCount.textContent = 'Compteur indisponible';
+                }
+            });
+            window.setInterval(async () => {
+                if (!visitorSubscribed) return;
+                await visitorChannel.track({ online_at: new Date().toISOString() });
+                updateVisitorCount();
+            }, 50000);
+
+            const chatChannel = client.channel('ares45-public-chat', { config: { broadcast: { self: false } } });
+            chatChannel.on('broadcast', { event: 'message' }, ({ payload }) => appendChatMessage(payload));
+            chatChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    chatStatus.textContent = 'Connecté';
+                    chatUsername.disabled = false;
+                    chatMessage.disabled = false;
+                    chatSend.disabled = false;
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    chatStatus.textContent = 'Connexion impossible';
+                }
+            });
+
+            chatForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const username = chatUsername.value.trim();
+                const text = chatMessage.value.trim();
+                if (!username || !text) return;
+                chatSend.disabled = true;
+                try {
+                    const message = { username: username.slice(0, 24), text: text.slice(0, 300), sentAt: new Date().toISOString() };
+                    const result = await chatChannel.send({ type: 'broadcast', event: 'message', payload: message });
+                    if (result !== 'ok') throw new Error('Échec de l’envoi');
+                    appendChatMessage(message);
+                    chatMessage.value = '';
+                    chatStatus.textContent = 'Connecté';
+                } catch (_error) {
+                    chatStatus.textContent = 'Message non envoyé';
+                } finally {
+                    chatSend.disabled = false;
+                    chatMessage.focus();
+                }
+            });
+        }
+
+        playFrenchStream();
+        configureRealtime();
+    </script>
+</body>
+</html>
