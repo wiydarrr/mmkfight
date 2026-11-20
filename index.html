@@ -101,6 +101,7 @@
         video { display: block; width: 100%; height: 100%; object-fit: contain; }
         .player-status {
             position: absolute;
+            z-index: 1;
             top: 14px;
             left: 14px;
             max-width: calc(100% - 28px);
@@ -111,6 +112,42 @@
             color: #e7eaf0;
             font-size: .75rem;
             pointer-events: none;
+        }
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            display: inline-flex;
+            min-height: 58px;
+            align-items: center;
+            gap: 12px;
+            padding: 0 22px 0 12px;
+            transform: translate(-50%, -50%);
+            border: 1px solid rgba(255, 241, 196, .72);
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+            box-shadow: 0 10px 34px rgba(225, 178, 62, .25), inset 0 1px rgba(255, 255, 255, .3);
+            color: #17120a;
+            cursor: pointer;
+            font-size: .95rem;
+            font-weight: 850;
+            transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+        }
+        .play-button:hover { transform: translate(-50%, -50%) scale(1.04); filter: brightness(1.06); }
+        .play-button:active { transform: translate(-50%, -50%) scale(.98); }
+        .play-button-icon {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .12);
+            font-size: 1rem;
+            line-height: 1;
+        }
+        @media (max-width: 560px) {
+            .play-button { min-height: 52px; gap: 9px; padding: 0 17px 0 10px; font-size: .85rem; }
+            .play-button-icon { width: 32px; height: 32px; }
         }
         :focus-visible { outline: 3px solid var(--accent-bright); outline-offset: 3px; }
         .poster-section { margin-top: 22px; text-align: center; }
@@ -240,8 +277,12 @@
 
             <section class="player-container" aria-label="Lecteur vidéo">
                 <div class="video-wrapper">
-                    <video id="videoPlayer" controls playsinline preload="metadata" aria-label="Flux vidéo français de l’événement"></video>
+                    <video id="videoPlayer" playsinline preload="metadata" aria-label="Flux vidéo français de l’événement"></video>
                     <div class="player-status" id="playerStatus" role="status" aria-live="polite">Préparation du lecteur…</div>
+                    <button class="play-button" id="playButton" type="button" aria-label="Démarrer le direct">
+                        <span class="play-button-icon" id="playButtonIcon" aria-hidden="true">▶</span>
+                        <span id="playButtonLabel">Démarrer le direct</span>
+                    </button>
                 </div>
             </section>
 
@@ -281,6 +322,9 @@
 
         const video = document.getElementById('videoPlayer');
         const playerStatus = document.getElementById('playerStatus');
+        const playButton = document.getElementById('playButton');
+        const playButtonIcon = document.getElementById('playButtonIcon');
+        const playButtonLabel = document.getElementById('playButtonLabel');
         const visitorCount = document.getElementById('visitorCount');
         const chatStatus = document.getElementById('chatStatus');
         const chatMessages = document.getElementById('chatMessages');
@@ -295,30 +339,80 @@
             playerStatus.textContent = message;
         }
 
+        let streamReady = false;
+        let playbackRequested = false;
+
         function playFrenchStream() {
+            streamReady = false;
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
             setPlayerStatus('Connexion au flux…');
+
             if (window.Hls && Hls.isSupported()) {
                 hls = new Hls();
-                hls.loadSource(FRENCH_STREAM_URL);
-                hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(() => setPlayerStatus('Appuie sur Lecture pour démarrer.'));
+                    streamReady = true;
+                    setPlayerStatus('Appuie sur Démarrer le direct.');
+                    if (playbackRequested) {
+                        video.play().catch(() => setPlayerStatus('Appuie sur Démarrer le direct.'));
+                    }
                 });
                 hls.on(Hls.Events.ERROR, (_event, data) => {
-                    if (data.fatal) setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+                    if (data.fatal) {
+                        streamReady = false;
+                        setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+                    }
                 });
+                hls.loadSource(FRENCH_STREAM_URL);
+                hls.attachMedia(video);
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = FRENCH_STREAM_URL;
                 video.onloadedmetadata = () => {
-                    video.play().catch(() => setPlayerStatus('Appuie sur Lecture pour démarrer.'));
+                    streamReady = true;
+                    setPlayerStatus('Appuie sur Démarrer le direct.');
+                    if (playbackRequested) {
+                        video.play().catch(() => setPlayerStatus('Appuie sur Démarrer le direct.'));
+                    }
                 };
-                video.onerror = () => setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+                video.onerror = () => {
+                    streamReady = false;
+                    setPlayerStatus('Le flux est indisponible. Réessaie plus tard.');
+                };
             } else {
                 setPlayerStatus('La lecture HLS n’est pas prise en charge par ce navigateur.');
             }
         }
 
-        video.addEventListener('playing', () => setPlayerStatus('Lecture en cours.'));
+        playButton.addEventListener('click', () => {
+            if (video.paused) {
+                playbackRequested = true;
+                if (streamReady) {
+                    video.play().catch(() => setPlayerStatus('Le flux ne peut pas démarrer.'));
+                } else {
+                    setPlayerStatus('Le flux n’est pas prêt. Réessaie dans un instant.');
+                }
+                return;
+            }
+            playbackRequested = false;
+            video.pause();
+        });
+
+        video.addEventListener('playing', () => {
+            setPlayerStatus('Lecture en cours.');
+            playButtonIcon.textContent = 'Ⅱ';
+            playButtonLabel.textContent = 'Mettre en pause';
+            playButton.setAttribute('aria-label', 'Mettre le direct en pause');
+        });
+        video.addEventListener('pause', () => {
+            playButtonIcon.textContent = '▶';
+            playButtonLabel.textContent = 'Démarrer le direct';
+            playButton.setAttribute('aria-label', 'Démarrer le direct');
+        });
 
         function appendChatMessage(message) {
             if (!message || typeof message.text !== 'string' || typeof message.username !== 'string') return;
@@ -361,14 +455,14 @@
             }
 
             const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            const visitorId = window.crypto?.randomUUID?.() || `-`;
+            const visitorId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
             const visitorChannel = client.channel('ares45-visitors', { config: { presence: { key: visitorId } } });
             let visitorSubscribed = false;
 
             function updateVisitorCount() {
                 const presence = visitorChannel.presenceState();
                 const count = Object.values(presence).reduce((total, visitors) => total + visitors.length, 0);
-                visitorCount.textContent = `  'personnes' en direct`;
+                visitorCount.textContent = `${count} ${count === 1 ? 'personne' : 'personnes'} en direct`;
             }
 
             visitorChannel.on('presence', { event: 'sync' }, updateVisitorCount).subscribe(async (status) => {
